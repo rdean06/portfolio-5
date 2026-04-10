@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RD HelpDesk Simulator — Rebecca Dean</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600&family=Lato:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stone: #2C2416; --bark: #4A3728; --earth: #6B4E35; --clay: #A0714F;
+    --sand: #C9A87C; --wheat: #E8D5B0; --parchment: #F5EDD8; --cream: #FAF5EC;
+    --gold: #C8982A; --gold-light: #E8BB55; --ember: #B85C2A;
+    --moss: #4A5E3A; --sage: #7A9168; --fern: #9EAF8A; --mist: #B8C4AD;
+    --mystic: #3D4B6E; --twilight: #5C6E9A; --starlight: #8FA3C8; --silver: #C8D4E8;
+    --red: #8B2020; --red-light: #C43030;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background-color: var(--cream); color: var(--stone); font-family: 'Lato', Georgia, serif; font-weight: 300; line-height: 1.75; overflow-x: hidden; min-height: 100vh; }
+  .hex-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.045; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='97'%3E%3Cpolygon points='42,2 82,22 82,74 42,94 2,74 2,22' fill='none' stroke='%234A3728' stroke-width='1.5'/%3E%3C/svg%3E"); background-size: 84px 97px; }
+  body::before { content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 150px; }
+  .wrapper { position: relative; z-index: 2; }
+
+nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 64px; background: rgba(245,237,216,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(200,152,42,0.25); }
+.nav-logo { font-family: ‘Cinzel’, serif; font-size: 0.85rem; letter-spacing: 0.2em; color: var(–earth); text-transform: uppercase; }
+.nav-back { font-family: ‘Cinzel’, serif; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; text-decoration: none; color: var(–bark); border: 1px solid rgba(200,152,42,0.3); padding: 0.4rem 1rem; transition: all 0.25s; }
+.nav-back:hover { color: var(–gold); border-color: var(–gold); }
+
+.sim-hero { background: linear-gradient(155deg, var(–bark) 0%, var(–stone) 60%, #1a150e 100%); padding: 8rem 5vw 4rem; position: relative; overflow: hidden; text-align: center; }
+.sim-hero::before { content: ‘’; position: absolute; inset: 0; pointer-events: none; background-image: url(“data:image/svg+xml,%3Csvg xmlns=‘http://www.w3.org/2000/svg’ width=‘60’ height=‘69’%3E%3Cpolygon points=‘30,2 58,16 58,53 30,67 2,53 2,16’ fill=‘none’ stroke=’%23C8982A’ stroke-width=‘0.5’ opacity=‘0.1’/%3E%3C/svg%3E”); background-size: 60px 69px; }
+.hero-tag { font-family: ‘Cinzel’, serif; font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(–gold); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.hero-tag::before, .hero-tag::after { content: ‘’; display: block; width: 40px; height: 1px; background: var(–gold); }
+.hero-title { font-family: ‘Cinzel Decorative’, serif; font-size: clamp(1.8rem, 4vw, 3rem); color: var(–wheat); line-height: 1.2; margin-bottom: 0.75rem; }
+.hero-sub { font-family: ‘Cinzel’, serif; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(–sand); margin-bottom: 1.5rem; }
+.hero-desc { font-size: 0.95rem; color: var(–mist); max-width: 560px; margin: 0 auto 2.5rem; line-height: 1.8; border-left: 2px solid var(–moss); padding-left: 1.2rem; text-align: left; }
+.score-row { display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+.score-chip { font-family: ‘Cinzel’, serif; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(–sand); border: 1px solid rgba(200,152,42,0.3); padding: 0.4rem 1rem; }
+.score-chip span { color: var(–gold); font-size: 0.9rem; }
+
+.container { max-width: 860px; margin: 0 auto; padding: 3rem 2rem; }
+
+/* Boot */
+.boot-panel { background: var(–parchment); border: 1px solid rgba(200,152,42,0.2); padding: 3rem 2.5rem; position: relative; margin-bottom: 2rem; }
+.boot-panel::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(–gold), var(–ember), transparent); }
+.boot-title { font-family: ‘Cinzel Decorative’, serif; font-size: clamp(1.4rem, 3vw, 2rem); color: var(–bark); margin-bottom: 0.5rem; }
+.boot-sub-title { font-family: ‘Cinzel’, serif; font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(–gold); margin-bottom: 2rem; }
+.boot-log { background: var(–stone); border: 1px solid rgba(200,152,42,0.15); padding: 1.2rem 1.5rem; text-align: left; margin-bottom: 2rem; font-size: 0.82rem; line-height: 2; color: var(–mist); }
+.boot-log .log-line::before { content: ’» ‘; color: var(–gold); }
+.boot-log .log-line.ok::after { content: ’ [ OK ]’; color: var(–fern); font-size: 0.72rem; }
+.start-btn { font-family: ‘Cinzel’, serif; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; background: var(–gold); border: 1px solid var(–gold); color: var(–stone); padding: 1rem 3rem; cursor: pointer; transition: all 0.3s; }
+.start-btn:hover { background: var(–gold-light); border-color: var(–gold-light); }
+.rules-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; }
+.rule-card { background: var(–cream); border: 1px solid rgba(200,152,42,0.15); border-left: 3px solid var(–gold); padding: 1rem; }
+.rule-title { font-family: ‘Cinzel’, serif; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(–earth); margin-bottom: 0.4rem; }
+.rule-text { font-size: 0.8rem; color: var(–clay); }
+
+/* Progress */
+.progress-section { background: var(–parchment); border: 1px solid rgba(200,152,42,0.2); padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; position: relative; }
+.progress-section::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(–gold), transparent); }
+.progress-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+.progress-label { font-family: ‘Cinzel’, serif; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(–clay); white-space: nowrap; }
+.progress-track { flex: 1; height: 4px; background: rgba(200,152,42,0.15); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(–moss), var(–gold)); border-radius: 2px; transition: width 0.5s ease; }
+.stats-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.stat-pill { font-family: ‘Cinzel’, serif; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(–clay); }
+.stat-pill span { color: var(–gold); }
+
+/* Ticket */
+.ticket-card { background: var(–parchment); border: 1px solid rgba(200,152,42,0.2); padding: 2rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+.ticket-card::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(–gold), var(–ember), transparent); }
+.ticket-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(200,152,42,0.15); }
+.ticket-id { font-family: ‘Cinzel’, serif; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(–clay); }
+.ticket-priority { font-family: ‘Cinzel’, serif; font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.25rem 0.75rem; border: 1px solid; }
+.priority-high { border-color: var(–red-light); color: var(–red-light); }
+.priority-med { border-color: var(–gold); color: var(–gold); }
+.priority-low { border-color: var(–fern); color: var(–fern); }
+.ticket-user { font-size: 0.75rem; color: var(–clay); margin-bottom: 0.75rem; }
+.ticket-problem { font-family: ‘Cinzel Decorative’, serif; font-size: clamp(1.1rem, 2.5vw, 1.5rem); color: var(–bark); line-height: 1.3; margin-bottom: 0.75rem; }
+.ticket-desc { font-size: 0.85rem; color: var(–earth); line-height: 1.7; }
+
+/* Options */
+.options-label { font-family: ‘Cinzel’, serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(–gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+.options-label::after { content: ‘’; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(200,152,42,0.3), transparent); }
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; }
+.option-btn { background: var(–cream); border: 1px solid rgba(200,152,42,0.18); border-left: 3px solid rgba(200,152,42,0.3); color: var(–earth); font-family: ‘Lato’, Georgia, serif; font-weight: 300; font-size: 0.85rem; padding: 1rem 1.2rem; cursor: pointer; text-align: left; transition: all 0.2s; line-height: 1.5; }
+.option-btn:hover { background: var(–parchment); border-color: var(–gold); border-left-color: var(–gold); box-shadow: -3px 3px 15px rgba(74,55,40,0.08); transform: translateX(2px); }
+.option-btn .opt-key { display: block; font-family: ‘Cinzel’, serif; font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(–gold); margin-bottom: 0.3rem; }
+.option-btn.correct { background: rgba(74,94,58,0.1); border-color: var(–moss); border-left-color: var(–moss); color: var(–stone); }
+.option-btn.wrong { background: rgba(139,32,32,0.08); border-color: var(–red-light); border-left-color: var(–red-light); color: var(–red); }
+.option-btn:disabled { cursor: not-allowed; }
+
+/* Log */
+.response-panel { background: var(–stone); border: 1px solid rgba(200,152,42,0.15); padding: 1.2rem 1.5rem; font-size: 0.8rem; line-height: 1.9; display: none; position: relative; margin-bottom: 1rem; }
+.response-panel::before { content: ‘SYSTEM LOG’; position: absolute; top: -0.6rem; left: 1rem; background: var(–stone); padding: 0 0.5rem; font-family: ‘Cinzel’, serif; font-size: 0.52rem; letter-spacing: 0.2em; color: var(–gold); }
+.log-entry { display: block; color: var(–mist); }
+.log-entry.success { color: var(–fern); }
+.log-entry.error { color: #cc5555; }
+
+/* Feedback */
+.feedback-panel { padding: 1.2rem 1.5rem; border-left: 3px solid; margin-bottom: 1rem; display: none; }
+.feedback-panel.correct { border-color: var(–moss); background: rgba(74,94,58,0.06); }
+.feedback-panel.wrong { border-color: var(–red-light); background: rgba(139,32,32,0.05); }
+.feedback-title { font-family: ‘Cinzel’, serif; font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.4rem; }
+.feedback-panel.correct .feedback-title { color: var(–moss); }
+.feedback-panel.wrong .feedback-title { color: var(–red-light); }
+.feedback-text { font-size: 0.85rem; color: var(–earth); line-height: 1.7; }
+
+.next-btn { display: none; width: 100%; font-family: ‘Cinzel’, serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; background: transparent; border: 1px solid var(–sand); color: var(–sand); padding: 0.85rem 2rem; cursor: pointer; transition: all 0.3s; margin-top: 0.5rem; }
+.next-btn:hover { background: var(–bark); border-color: var(–wheat); color: var(–wheat); }
+
+/* End */
+.end-panel { background: var(–parchment); border: 1px solid rgba(200,152,42,0.2); padding: 3rem 2rem; position: relative; overflow: hidden; text-align: center; }
+.end-panel::before { content: ‘’; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(–gold), var(–ember), transparent); }
+.end-label { font-family: ‘Cinzel’, serif; font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(–gold); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.end-label::before, .end-label::after { content: ‘’; display: block; width: 40px; height: 1px; background: var(–gold); }
+.end-title { font-family: ‘Cinzel Decorative’, serif; font-size: clamp(1.6rem, 4vw, 2.8rem); color: var(–bark); line-height: 1.2; margin-bottom: 0.5rem; }
+.end-grade { font-family: ‘Cinzel Decorative’, serif; font-size: 5rem; line-height: 1; margin: 0.5rem 0 1rem; }
+.end-score { font-family: ‘Cinzel’, serif; font-size: 1.1rem; letter-spacing: 0.1em; color: var(–earth); margin-bottom: 1rem; }
+.end-message { font-size: 0.9rem; color: var(–clay); max-width: 520px; margin: 0 auto 2rem; line-height: 1.8; border-left: 2px solid var(–moss); padding-left: 1rem; text-align: left; }
+.end-stats { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.end-stat { background: var(–cream); border: 1px solid rgba(200,152,42,0.2); border-left: 3px solid var(–gold); padding: 1rem 1.5rem; text-align: center; min-width: 100px; }
+.end-stat-num { font-family: ‘Cinzel Decorative’, serif; font-size: 1.8rem; display: block; margin-bottom: 0.2rem; }
+.end-stat-label { font-family: ‘Cinzel’, serif; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(–clay); }
+.end-btns { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.btn { font-family: ‘Cinzel’, serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; text-decoration: none; padding: 0.85rem 1.8rem; border: 1px solid; transition: all 0.3s; display: inline-block; cursor: pointer; background: transparent; }
+.btn-gold { background: var(–gold); border-color: var(–gold); color: var(–stone); }
+.btn-gold:hover { background: var(–gold-light); border-color: var(–gold-light); }
+.btn-outline { border-color: var(–sand); color: var(–clay); }
+.btn-outline:hover { background: rgba(201,168,124,0.12); border-color: var(–wheat); color: var(–wheat); }
+.built-credit { font-family: ‘Cinzel’, serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(–clay); }
+.built-credit a { color: var(–gold); text-decoration: none; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation: fadeUp 0.4s ease both; }
+
+@media (max-width: 600px) {
+nav { padding: 0 1rem; }
+.options-grid { grid-template-columns: 1fr; }
+.rules-row { grid-template-columns: 1fr; }
+.container { padding: 2rem 1rem; }
+.sim-hero { padding: 6rem 1.5rem 3rem; }
+}
+</style>
+
+</head>
+<body>
+<div class="hex-bg"></div>
+<div class="wrapper">
+
+<nav>
+  <div class="nav-logo">RD HelpDesk &mdash; Simulator</div>
+  <a href="index.html" class="nav-back">← Portfolio</a>
+</nav>
+
+<div class="sim-hero">
+  <div class="hero-tag">Rebecca Dean &middot; IT Support Professional</div>
+  <h1 class="hero-title">IT HelpDesk Simulator</h1>
+  <p class="hero-sub">Can you resolve the tickets?</p>
+  <p class="hero-desc">This is the kind of work I do. Real IT problems, real solutions. Pick the right fix for each ticket and see how you score. Built by a Quality Engineer who learned by breaking things and putting them back together.</p>
+  <div class="score-row">
+    <div class="score-chip">Tickets: <span>8</span></div>
+    <div class="score-chip">Points: <span>100 each</span></div>
+    <div class="score-chip">Score: <span id="hero-score">0</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="boot-screen">
+    <div class="boot-panel">
+      <div class="boot-title">Initializing Support Terminal</div>
+      <div class="boot-sub-title">i.c.stars C6 &middot; Quality Engineer &middot; IT Support</div>
+      <div class="boot-log">
+        <span class="log-line ok">Loading ticket database</span>
+        <span class="log-line ok">Connecting to KCPS network</span>
+        <span class="log-line ok">Rebecca Dean reporting for duty</span>
+        <span class="log-line ok">8 tickets in queue — ready to resolve</span>
+      </div>
+      <button class="start-btn" onclick="startGame()">Open Ticket Queue &rarr;</button>
+    </div>
+    <div class="rules-row">
+      <div class="rule-card"><div class="rule-title">How to Play</div><div class="rule-text">Read each ticket carefully. Pick the best solution from four options. One answer is always correct.</div></div>
+      <div class="rule-card"><div class="rule-title">Scoring</div><div class="rule-text">100 points for every ticket resolved correctly. See if you can get a perfect score.</div></div>
+      <div class="rule-card"><div class="rule-title">The Goal</div><div class="rule-text">Resolve all 8 tickets. Think like an IT professional — check the basics before going big.</div></div>
+    </div>
+  </div>
+
+  <div id="game-screen" style="display:none;">
+    <div class="progress-section">
+      <div class="progress-row">
+        <div class="progress-label" id="ticket-count">Ticket 1 of 8</div>
+        <div class="progress-track"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+        <div class="progress-label" id="score-label" style="color:var(--gold);">0 pts</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-pill">Resolved: <span id="stat-correct">0</span></div>
+        <div class="stat-pill">Escalated: <span id="stat-wrong">0</span></div>
+        <div class="stat-pill">Streak: <span id="stat-streak">0</span></div>
+      </div>
+    </div>
+    <div class="ticket-card" id="ticket-card">
+      <div class="ticket-header">
+        <div class="ticket-id" id="ticket-id">Ticket #0001</div>
+        <div class="ticket-priority" id="ticket-priority">Priority: High</div>
+      </div>
+      <div class="ticket-user" id="ticket-user"></div>
+      <div class="ticket-problem" id="ticket-problem"></div>
+      <div class="ticket-desc" id="ticket-desc"></div>
+    </div>
+    <div class="options-label">Select Your Solution</div>
+    <div class="options-grid" id="options-grid"></div>
+    <div class="response-panel" id="response-panel"></div>
+    <div class="feedback-panel" id="feedback-panel">
+      <div class="feedback-title" id="feedback-title"></div>
+      <div class="feedback-text" id="feedback-text"></div>
+    </div>
+    <button class="next-btn" id="next-btn" onclick="nextTicket()">Next Ticket &rarr;</button>
+  </div>
+
+  <div id="end-screen" style="display:none;">
+    <div class="end-panel">
+      <div class="end-label">Shift Complete</div>
+      <h2 class="end-title" id="end-title">Well Done</h2>
+      <div class="end-grade" id="end-grade">B</div>
+      <div class="end-score" id="end-score">0 / 800 pts</div>
+      <div class="end-message" id="end-message"></div>
+      <div class="end-stats">
+        <div class="end-stat"><span class="end-stat-num" id="final-correct" style="color:var(--moss);">0</span><span class="end-stat-label">Resolved</span></div>
+        <div class="end-stat"><span class="end-stat-num" id="final-wrong" style="color:var(--red-light);">0</span><span class="end-stat-label">Escalated</span></div>
+        <div class="end-stat"><span class="end-stat-num" id="final-streak" style="color:var(--gold);">0</span><span class="end-stat-label">Best Streak</span></div>
+      </div>
+      <div class="end-btns">
+        <button class="btn btn-gold" onclick="restartGame()">Play Again</button>
+        <a class="btn btn-outline" href="index.html">View Full Portfolio</a>
+      </div>
+      <div class="built-credit">Built by <a href="index.html">Rebecca Reaume Dean</a> &mdash; i.c.stars C6 &middot; IT Support Professional</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const tickets = [
+  { id:'0042', priority:'HIGH', priorityClass:'priority-high', user:'User: Karen M. — Accounting Dept', problem:"I forgot my password and can't log in!", desc:'User locked out since this morning. Important meeting in 20 minutes.', options:[{key:'A',text:'Tell her to try her old password a few more times',correct:false},{key:'B',text:'Reset her password through the admin portal and send a temporary password',correct:true},{key:'C',text:'Ask her to wait until tomorrow',correct:false},{key:'D',text:"Tell her to use a coworker's login for now",correct:false}], logCorrect:['» Accessing admin portal...','» Locating account: karen.m@kcps.org... FOUND','» Resetting credentials...','» Temporary password generated and emailed.','» TICKET RESOLVED'], logWrong:['» ERROR: Account lockout triggered.','» User fully locked out.','» TICKET ESCALATED'], feedback:'Always reset through the admin portal. Never ask users to keep guessing — that triggers lockouts and security flags.', wrongFeedback:'Account resets go through the admin portal only. Asking users to keep guessing causes full lockouts.' },
+  { id:'0107', priority:'MED', priorityClass:'priority-med', user:'User: James T. — IT Lab', problem:"My computer won't turn on at all.", desc:'No lights, no fan noise, nothing. Was working fine yesterday.', options:[{key:'A',text:'Check if the power cable is plugged in at both ends — wall and computer',correct:true},{key:'B',text:'Immediately order a replacement computer',correct:false},{key:'C',text:'Tell the user to work from their phone today',correct:false},{key:'D',text:'Open the computer and check the motherboard',correct:false}], logCorrect:['» Running basic diagnostics...','» Checking power connection... LOOSE CABLE DETECTED','» Cable re-seated at surge protector.','» System boot initiated... SUCCESS','» TICKET RESOLVED — No parts needed.'], logWrong:['» ERROR: Skipped Level 1 troubleshooting.','» Senior tech found a loose cable in 30 seconds.','» TICKET ESCALATED'], feedback:'Always start with Level 1 — check the basics first. Power cables resolve more tickets than you would expect.', wrongFeedback:'The first rule of IT: check the simple stuff first. A loose power cable is the most common cause of a "dead" computer.' },
+  { id:'0213', priority:'HIGH', priorityClass:'priority-high', user:'User: Priya S. — Admin Office', problem:"Can't connect to WiFi — keeps saying 'No Internet'.", desc:"Laptop shows connected but pages won't load. Started after a Windows update.", options:[{key:'A',text:'Tell her to restart the router in the server room',correct:false},{key:'B',text:'Run network troubleshooter, flush DNS, then restart the adapter',correct:true},{key:'C',text:'Reinstall Windows from scratch',correct:false},{key:'D',text:'Tell her to use her hotspot until it fixes itself',correct:false}], logCorrect:['» Running Network Troubleshooter...','» DNS cache conflict post-update detected.','» Executing: ipconfig /flushdns... DONE','» Restarting network adapter...','» Ping test: SUCCESS','» TICKET RESOLVED'], logWrong:['» ERROR: Action disproportionate to the issue.','» Correct fix: flush DNS, restart adapter.','» TICKET ESCALATED'], feedback:'After a Windows update, DNS cache conflicts are common. Flush with "ipconfig /flushdns" in PowerShell — fixes it in under 2 minutes.', wrongFeedback:'Reinstalling Windows wastes hours. The fix here is a DNS flush — a single command in PowerShell.' },
+  { id:'0334', priority:'LOW', priorityClass:'priority-low', user:'User: Marcus W. — Print Room', problem:"Printer says online but won't print.", desc:'Jobs are queuing but nothing comes out. Paper and ink are fine.', options:[{key:'A',text:'Replace the printer with a new one',correct:false},{key:'B',text:'Clear the print queue and restart the Print Spooler service',correct:true},{key:'C',text:'Tell the user to email documents instead of printing',correct:false},{key:'D',text:'Uninstall and reinstall all printer drivers',correct:false}], logCorrect:['» Checking print queue... 14 STUCK JOBS DETECTED','» Clearing queue... DONE','» Restarting Print Spooler service...','» Test page printed successfully.','» TICKET RESOLVED'], logWrong:['» ERROR: Over-engineered solution.','» Quick fix: clear queue + restart Print Spooler.','» TICKET ESCALATED'], feedback:'A stuck print queue is almost always fixed by clearing jobs and restarting the Print Spooler in services.msc.', wrongFeedback:'Before replacing hardware, check the print queue. Stuck jobs and a hung spooler is the #1 cause of this problem.' },
+  { id:'0451', priority:'HIGH', priorityClass:'priority-high', user:'User: Lisa R. — Principal Office', problem:"Got a suspicious email asking for my login info.", desc:"Email claims to be from IT asking her to verify credentials. She hasn't clicked it yet.", options:[{key:'A',text:"Tell her it's probably fine and to go ahead and verify",correct:false},{key:'B',text:'Ask her to forward it so you can check it first',correct:false},{key:'C',text:'Tell her not to click, mark as phishing, and report to IT Security immediately',correct:true},{key:'D',text:'Delete the email and move on',correct:false}], logCorrect:['» SECURITY ALERT: Phishing attempt detected.','» User advised: DO NOT CLICK.','» Email reported to IT Security.','» All staff notified.','» Threat contained. TICKET RESOLVED'], logWrong:['» CRITICAL ERROR: Security protocol violated.','» Potential credential compromise in progress.','» SECURITY INCIDENT OPENED'], feedback:"IT will NEVER ask for your password via email. Report phishing immediately — one click can compromise the whole network.", wrongFeedback:"This is a phishing attempt. Never click or forward suspicious links. Report to IT Security immediately." },
+  { id:'0562', priority:'MED', priorityClass:'priority-med', user:'User: Derek H. — Math Teacher', problem:"My computer is running really slow.", desc:'Getting slower over the past week. Takes 10 minutes to boot up.', options:[{key:'A',text:'Tell him to just wait longer for it to boot',correct:false},{key:'B',text:'Run disk cleanup, audit startup programs, and scan for malware',correct:true},{key:'C',text:'Immediately wipe and reinstall the OS',correct:false},{key:'D',text:'Replace the RAM without running any diagnostics',correct:false}], logCorrect:['» Startup programs: 47 ON BOOT (excessive)','» Disk usage: 94% FULL','» Disk Cleanup: 12GB freed.','» Malware scan: 3 PUPs removed.','» Boot time: 10 min → 45 sec. TICKET RESOLVED'], logWrong:['» ERROR: Root cause not addressed.','» Proper fix: cleanup, startup audit, malware scan.','» TICKET ESCALATED'], feedback:'Slow computers are usually caused by full disks, too many startup programs, or malware. Always run diagnostics first.', wrongFeedback:'A slow computer rarely needs new hardware right away. Disk cleanup and startup audit fixes this 80% of the time.' },
+  { id:'0634', priority:'LOW', priorityClass:'priority-low', user:'User: Sandra B. — Library', problem:"Screen has gone black but computer is still on.", desc:'Power light is green, fan is running, but the monitor is completely black.', options:[{key:'A',text:'Order a new monitor immediately',correct:false},{key:'B',text:'Check the monitor cable and try pressing a key or moving the mouse first',correct:true},{key:'C',text:"Tell her to restart the building's power",correct:false},{key:'D',text:'Assume the graphics card is dead',correct:false}], logCorrect:['» Checking display connections...','» Monitor cable: LOOSE AT BACK OF MONITOR','» Cable re-seated... display restored.','» TICKET RESOLVED — 2 minute fix.'], logWrong:['» ERROR: Basic troubleshooting skipped.','» Problem resolved by re-seating a cable.','» TICKET ESCALATED'], feedback:'A black screen with the PC running is almost always a loose cable or sleep mode. Check the basics before assuming hardware failure.', wrongFeedback:'Black screen + PC running = check the cable first. Takes 10 seconds.' },
+  { id:'0781', priority:'HIGH', priorityClass:'priority-high', user:'User: Tom K. — Science Lab', problem:"I accidentally deleted an important file!", desc:'Critical project file deleted about 30 minutes ago. Not sure if local or network.', options:[{key:'A',text:"Tell him the file is gone and he'll need to redo it",correct:false},{key:'B',text:"Check the Recycle Bin first, then check Previous Versions on the network share",correct:true},{key:'C',text:'Download file recovery software from the internet',correct:false},{key:'D',text:'Ask a coworker if they have a copy',correct:false}], logCorrect:['» Checking Recycle Bin... FILE NOT FOUND','» Checking network share Previous Versions...','» Snapshot found from 2 hours ago.','» Restoring file... DONE','» TICKET RESOLVED — Data recovered!'], logWrong:['» ERROR: Recovery failed or security risk created.','» Correct path: Recycle Bin > Previous Versions.','» TICKET ESCALATED'], feedback:"Always check the Recycle Bin first. For network files, right-click and check 'Restore Previous Versions'.", wrongFeedback:"Never install random recovery software on a company network. Built-in tools are the right first step." }
+];
+
+let current=0,score=0,correct=0,wrong=0,streak=0,bestStreak=0,answered=false,shuffled=[];
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startGame(){
+  shuffled=shuffle(tickets);current=0;score=0;correct=0;wrong=0;streak=0;bestStreak=0;
+  document.getElementById('boot-screen').style.display='none';
+  document.getElementById('end-screen').style.display='none';
+  document.getElementById('game-screen').style.display='block';
+  loadTicket();
+}
+
+function loadTicket(){
+  answered=false;
+  const t=shuffled[current];
+  document.getElementById('ticket-count').textContent=`Ticket ${current+1} of ${shuffled.length}`;
+  document.getElementById('progress-bar').style.width=`${(current/shuffled.length)*100}%`;
+  document.getElementById('score-label').textContent=`${score} pts`;
+  document.getElementById('hero-score').textContent=score;
+  document.getElementById('stat-correct').textContent=correct;
+  document.getElementById('stat-wrong').textContent=wrong;
+  document.getElementById('stat-streak').textContent=streak;
+  document.getElementById('ticket-id').textContent=`Ticket #${t.id}`;
+  document.getElementById('ticket-priority').textContent=`Priority: ${t.priority}`;
+  document.getElementById('ticket-priority').className=`ticket-priority ${t.priorityClass}`;
+  document.getElementById('ticket-user').textContent=t.user;
+  document.getElementById('ticket-problem').textContent=t.problem;
+  document.getElementById('ticket-desc').textContent=t.desc;
+  const opts=shuffle(t.options);
+  const keys=['A','B','C','D'];
+  const grid=document.getElementById('options-grid');
+  grid.innerHTML='';
+  opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='option-btn';
+    btn.innerHTML=`<span class="opt-key">Option ${keys[i]}</span>${opt.text}`;
+    btn.onclick=()=>selectAnswer(opt.correct,btn,t);
+    grid.appendChild(btn);
+  });
+  document.getElementById('response-panel').style.display='none';
+  document.getElementById('response-panel').innerHTML='';
+  document.getElementById('feedback-panel').style.display='none';
+  document.getElementById('next-btn').style.display='none';
+  const card=document.getElementById('ticket-card');
+  card.classList.remove('fade-in');
+  void card.offsetWidth;
+  card.classList.add('fade-in');
+}
+
+function selectAnswer(isCorrect,btn,ticket){
+  if(answered)return;
+  answered=true;
+  document.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+  const panel=document.getElementById('response-panel');
+  const feedback=document.getElementById('feedback-panel');
+  panel.style.display='block';
+  panel.innerHTML='';
+  if(isCorrect){
+    btn.classList.add('correct');score+=100;correct++;streak++;
+    if(streak>bestStreak)bestStreak=streak;
+    feedback.className='feedback-panel correct';
+    document.getElementById('feedback-title').textContent='✓ Ticket Resolved';
+    document.getElementById('feedback-text').textContent=ticket.feedback;
+  } else {
+    btn.classList.add('wrong');wrong++;streak=0;
+    feedback.className='feedback-panel wrong';
+    document.getElementById('feedback-title').textContent='✗ Ticket Escalated';
+    document.getElementById('feedback-text').textContent=ticket.wrongFeedback;
+  }
+  const lines=isCorrect?ticket.logCorrect:ticket.logWrong;
+  let lineIndex=0;
+  function typeLine(){
+    if(lineIndex>=lines.length){
+      feedback.style.display='block';
+      document.getElementById('next-btn').style.display='block';
+      document.getElementById('score-label').textContent=`${score} pts`;
+      document.getElementById('hero-score').textContent=score;
+      document.getElementById('stat-correct').textContent=correct;
+      document.getElementById('stat-wrong').textContent=wrong;
+      document.getElementById('stat-streak').textContent=streak;
+      return;
+    }
+    const line=document.createElement('span');
+    line.className='log-entry';
+    const txt=lines[lineIndex];
+    if(txt.includes('RESOLVED')||txt.includes('SUCCESS')||txt.includes('DONE'))line.classList.add('success');
+    if(txt.includes('ERROR')||txt.includes('CRITICAL')||txt.includes('ESCALATED'))line.classList.add('error');
+    line.textContent=txt;
+    panel.appendChild(line);
+    panel.appendChild(document.createElement('br'));
+    lineIndex++;setTimeout(typeLine,200);
+  }
+  setTimeout(typeLine,150);
+}
+
+function nextTicket(){
+  current++;
+  if(current>=shuffled.length)showEnd();else loadTicket();
+}
+
+function showEnd(){
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('end-screen').style.display='block';
+  const total=shuffled.length*100;
+  const pct=Math.round((score/total)*100);
+  document.getElementById('end-score').textContent=`${score} / ${total} pts`;
+  document.getElementById('final-correct').textContent=correct;
+  document.getElementById('final-wrong').textContent=wrong;
+  document.getElementById('final-streak').textContent=bestStreak;
+  document.getElementById('progress-bar').style.width='100%';
+  document.getElementById('hero-score').textContent=score;
+  let grade,color,title,msg;
+  if(pct===100){grade='S';color='var(--gold)';title='Flawless Shift';msg='Perfect score. Every ticket resolved correctly. You think like a seasoned IT professional — methodical, calm, and always right the first time.';}
+  else if(pct>=87){grade='A';color='var(--moss)';title='Outstanding Work';msg='Near perfect. You handled the tough calls and kept the team moving. Review the ones you missed and you will be unstoppable.';}
+  else if(pct>=75){grade='B';color='var(--sage)';title='Solid Performance';msg='Good work. You resolved most tickets and showed real IT fundamentals. A few gaps to work on — but the foundation is strong.';}
+  else if(pct>=50){grade='C';color='var(--sand)';title='Needs Practice';msg='You got through the shift but missed some important calls. Review the basics — power checks, DNS, print spooler, and security protocols.';}
+  else{grade='D';color='var(--ember)';title='Keep Learning';msg='Too many tickets escalated. Every great IT tech started somewhere. Head back to the basics and try again.';}
+  document.getElementById('end-title').textContent=title;
+  document.getElementById('end-grade').textContent=grade;
+  document.getElementById('end-grade').style.color=color;
+  document.getElementById('end-message').textContent=msg;
+}
+
+function restartGame(){
+  document.getElementById('end-screen').style.display='none';
+  startGame();
+}
+</script>
+
+</body>
+</html>
